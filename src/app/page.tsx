@@ -8,9 +8,14 @@ import ChatInterface from '../components/chat/ChatInterface'
 import VoiceControls from '../components/voice/VoiceControls'
 import SubscriptionPlans from '../components/payment/SubscriptionPlans'
 
+interface Message {
+  role: 'user' | 'assistant'
+  content: string
+}
+
 export default function Home() {
   const [authState, setAuthState] = useState('login') // 'login', 'signup', 'authenticated'
-  const [messages, setMessages] = useState([
+  const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
       content: 'Hello! I\'m Serene, your compassionate AI assistant for mental wellness. How are you feeling today?'
@@ -18,7 +23,7 @@ export default function Home() {
   ])
   const [isLoading, setIsLoading] = useState(false)
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(false)
-  const [voiceSettings, setVoiceSettings] = useState({
+  const [voiceSettings, setVoiceSettings] = useState<{ voiceId: string; speed: number }>({
     voiceId: 'female-1',
     speed: 1.0
   })
@@ -81,7 +86,7 @@ export default function Home() {
     setIsVoiceEnabled(enabled)
   }
 
-  const handleVoiceSettingsChange = (settings: any) => {
+  const handleVoiceSettingsChange = (settings: { voiceId: string; speed: number }) => {
     setVoiceSettings(settings)
   }
 
