@@ -98,6 +98,18 @@ export default function Home() {
     setIsLoading(true);
 
     try {
+      // Create a temporary loading message
+      const loadingMessage: HistoryMessage = {
+        role: 'assistant',
+        content: '',
+        timestamp: Date.now()
+      };
+      
+      // Add the loading message to the conversation
+      const historyWithLoading = addMessageToHistory(updatedHistory, loadingMessage);
+      setConversationHistory(historyWithLoading);
+      setMessages(historyWithLoading.messages);
+      
       // Send message to AI with conversation history
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -114,7 +126,7 @@ export default function Home() {
       const data = await response.json();
       
       if (data.success && data.response) {
-        // Create AI message with response
+        // Update the loading message with the actual response
         const aiMessage: HistoryMessage = {
           role: 'assistant',
           content: data.response,
@@ -129,9 +141,7 @@ export default function Home() {
         const fallbackResponses = [
           "I understand how you're feeling. It takes courage to share these thoughts.",
           "Thank you for opening up to me. Your feelings are valid and important.",
-          "It sounds like you're going through a challenging time. Let's explore this together.",
-          "I'm here to listen without judgment. What else would you like to share?",
-          "Your perspective is valuable. How long have you been feeling this way?"
+          "It sounds like you're going through a challenging time. Let's explore this together."
         ];
         
         const aiMessage: HistoryMessage = {
@@ -165,92 +175,6 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
-    
-    // Check if we need real-time information
-    let searchResults = null;
-    if (needsRealTimeInfo(message)) {
-      const searchResponse = await googleSearch(message);
-      if (searchResponse.success && searchResponse.results) {
-        searchResults = searchResponse.results;
-      }
-    }
-
-    // Simulate AI response after a delay
-    setTimeout(async () => {
-      // Create more contextually aware responses
-      let responses = [
-        "I understand how you're feeling. It takes courage to share these thoughts.",
-        "Thank you for opening up to me. Your feelings are valid and important.",
-        "It sounds like you're going through a challenging time. Let's explore this together.",
-        "I'm here to listen without judgment. What else would you like to share?",
-        "Your perspective is valuable. How long have you been feeling this way?",
-        "It's okay to feel this way. Many people experience similar emotions.",
-        "What do you think might help you feel better in this situation?",
-        "I appreciate your honesty. Let's work through this step by step."
-      ];
-      
-      // If we have search results, incorporate them
-      if (searchResults && searchResults.length > 0) {
-        responses = [
-          `I found some current information that might be helpful: ${searchResults[0].snippet.substring(0, 100)}...`,
-          `Based on recent information, ${searchResults[0].snippet}`,
-          `Here's what I found about that: ${searchResults[0].snippet.substring(0, 80)}...`,
-          ...responses
-        ];
-      }
-      
-      // If we have context, make responses more relevant
-      if (context && context.length > 1) {
-        // Analyze the last few messages to provide more relevant responses
-        const lastUserMessage = context.filter(msg => msg.role === 'user').pop();
-        const lastAssistantMessage = context.filter(msg => msg.role === 'assistant').pop();
-        
-        if (lastUserMessage) {
-          // Add more contextually relevant responses
-          responses = [
-            `Building on what you mentioned about "${lastUserMessage.content.substring(0, 30)}...", how has that been affecting you?`,
-            `I remember you mentioned something important. Let's dive deeper into that.`,
-            `Following up on our previous conversation, what aspects of this situation feel most challenging to you right now?`,
-            `I'd like to understand more about what you shared earlier. What emotions come up when you think about that?`,
-            ...responses
-          ];
-        }
-      }
-      
-      const aiMessage: HistoryMessage = {
-        role: 'assistant',
-        content: responses[Math.floor(Math.random() * responses.length)],
-        timestamp: Date.now()
-      }
-      
-      const finalHistory = addMessageToHistory(updatedHistory, aiMessage);
-      setConversationHistory(finalHistory);
-      setMessages(finalHistory.messages);
-      setIsLoading(false)
-      
-      // If voice is enabled and user has access to voice features, synthesize and play the response
-      if (isVoiceEnabled && canUseVoice(userSubscriptionPlan)) {
-        try {
-          const response = await fetch('/api/voice', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              text: aiMessage.content,
-              voiceId: voiceSettings.voiceId,
-              speed: voiceSettings.speed
-            })
-          });
-          
-          const data = await response.json();
-          if (data.success && data.audioUrl) {
-            const audio = new Audio(data.audioUrl);
-            audio.play();
-          }
-        } catch (error) {
-          console.error('Error playing voice response:', error);
-        }
-      }
-    }, 1500)
   }
 
   // Voice functions

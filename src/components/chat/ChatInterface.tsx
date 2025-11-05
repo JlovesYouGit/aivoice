@@ -127,9 +127,18 @@ export default function ChatInterface({ onSendMessage, messages, isLoading, user
                         : 'bg-white text-gray-800 rounded-bl-sm border border-gray-100'
                     }`}
                   >
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                      {message.content}
-                    </p>
+                    {message.role === 'assistant' && message.content === '' ? (
+                      // Typing indicator for AI
+                      <div className="flex space-x-2">
+                        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                        <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        <div className="w-2 h-2 bg-pink-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                      </div>
+                    ) : (
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                        {message.content}
+                      </p>
+                    )}
                   </div>
                   {/* Timestamp */}
                   <span className="text-xs text-gray-400 mt-1 px-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -141,8 +150,8 @@ export default function ChatInterface({ onSendMessage, messages, isLoading, user
           ))}
         </AnimatePresence>
 
-        {/* Loading indicator */}
-        {isLoading && (
+        {/* Loading indicator - shown when isLoading is true */}
+        {isLoading && messages.length > 0 && messages[messages.length - 1].role !== 'assistant' && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
