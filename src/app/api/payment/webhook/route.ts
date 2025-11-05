@@ -1,23 +1,22 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { buffer } from 'micro'
-import { Errors } from '@/src/utils/errorHandler'
+import { Errors } from '@/utils/errorHandler'
 
 // Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2023-10-16'
 })
 
 // Stripe requires the raw body to construct the event
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const buf = await buffer(request)
+    const body = await request.text()
     const sig = request.headers.get('stripe-signature')
 
     let event
 
     try {
-      event = stripe.webhooks.constructEvent(buf, sig, process.env.STRIPE_WEBHOOK_SECRET!)
+      event = stripe.webhooks.constructEvent(body, sig!, process.env.STRIPE_WEBHOOK_SECRET!)
     } catch (err: any) {
       console.error('Webhook signature verification failed:', err.message)
       return Errors.badRequest('Webhook Error: ' + err.message)
@@ -51,8 +50,5 @@ export async function POST(request: Request) {
   }
 }
 
-export const config = {
-  api: {
-    bodyParser: false
-  }
-}
+// For Next.js App Router, we don't need the config export
+// Raw body parsing is handled automatically

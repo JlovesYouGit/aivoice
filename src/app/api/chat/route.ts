@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { chatMessageSchema } from '@/utils/validation/schemas'
 import { validateInput, handleValidationError } from '@/utils/validation/validate'
-import { Errors } from '@/src/utils/errorHandler'
-import { localChatService, ChatMessage } from '../../../lib/ai/chat-service'
+import { Errors } from '@/utils/errorHandler'
+import { localChatService, ChatMessage } from '@/lib/ai/chat-service'
 
 export async function POST(request: Request) {
   try {
