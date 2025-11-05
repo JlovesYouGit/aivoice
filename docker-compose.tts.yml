@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  xtts-server:
+    image: ghcr.io/coqui-ai/xtts-streaming-server:latest
+    container_name: xtts-server
+    environment:
+      - COQUI_TOS_AGREED=1
+    ports:
+      - "8000:80"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    volumes:
+      - ./tts-models:/app/tts_models
+    restart: unless-stopped
+
+  # Fallback CPU version (slower but works on any machine)
+  xtts-server-cpu:
+    image: ghcr.io/coqui-ai/xtts-streaming-server:latest-cpu
+    container_name: xtts-server-cpu
+    environment:
+      - COQUI_TOS_AGREED=1
+    ports:
+      - "8001:80"
+    volumes:
+      - ./tts-models:/app/tts_models
+    restart: unless-stopped
