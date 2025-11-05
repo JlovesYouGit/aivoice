@@ -78,7 +78,7 @@ export async function processPayment(data: PaymentData, origin: string): Promise
     return {
       success: true,
       sessionId: session.id,
-      checkoutUrl: session.url
+      checkoutUrl: session.url || undefined
     };
   } catch (error) {
     console.error('Payment processing error:', error);

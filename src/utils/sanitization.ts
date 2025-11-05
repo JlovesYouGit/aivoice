@@ -72,7 +72,7 @@ export function sanitizeObject<T extends Record<string, any>>(
     const value = sanitized[key];
     
     if (typeof value === 'string') {
-      sanitized[key] = sanitizeHtml(value, strict);
+      sanitized[key] = sanitizeHtml(value, strict) as T[Extract<keyof T, string>];
     } else if (typeof value === 'object' && value !== null) {
       sanitized[key] = sanitizeObject(value, strict);
     }

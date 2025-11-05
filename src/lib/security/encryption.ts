@@ -356,8 +356,8 @@ export class EnvironmentValidator {
    * Check if running in production
    */
   static isProduction(): boolean {
-    return process.env.NODE_ENV === 'production' || 
-           process.env.NEXT_PUBLIC_SITE_URL?.includes('evalion.free.nf');
+    return (process.env.NODE_ENV === 'production') || 
+           !!(process.env.NEXT_PUBLIC_SITE_URL && process.env.NEXT_PUBLIC_SITE_URL.includes('evalion.free.nf'));
   }
 
   /**

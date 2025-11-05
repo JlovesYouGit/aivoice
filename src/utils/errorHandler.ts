@@ -20,6 +20,7 @@ export function createErrorResponse(
     {
       success: false,
       error: message,
+      status: status,
       ...(code && { code }),
       ...(details && { details }),
     },
@@ -33,6 +34,7 @@ export function createValidationError(errors: string[]): NextResponse<ApiError> 
     {
       success: false,
       error: 'Validation failed',
+      status: 400,
       details: errors.join(', '),
       code: 'VALIDATION_ERROR',
     },
