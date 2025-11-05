@@ -1,10 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // typedRoutes: true,  // Available in Next.js 14.1+
+  // Enable typedRoutes for Vercel deployment (supports latest Next.js)
+  typedRoutes: true,
   
-  // Temporarily disable TypeScript checking for build
+  // Production optimizations for Vercel
+  poweredByHeader: false,
+  compress: true,
+  
+  // Only ignore TypeScript errors in development for faster iteration
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: process.env.NODE_ENV === 'development',
   },
   
   async headers() {
@@ -74,9 +79,9 @@ const nextConfig = {
     ];
   },
 
-  // Image optimization for security
+  // Image optimization for evalion.free.nf
   images: {
-    domains: [],
+    domains: ['evalion.free.nf'],
     dangerouslyAllowSVG: false,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },

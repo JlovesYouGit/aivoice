@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { applyRateLimit, rateLimiters } from '@/lib/rate-limit';
 
-// CORS configuration
+// Vercel Edge Runtime Configuration
+export const config = {
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
+  ],
+  runtime: 'edge', // Use Vercel Edge Runtime for optimal performance
+};
+
+// CORS configuration for evalion.free.nf
 const CORS_ORIGINS = [
-  'https://yourdomain.com',
-  'https://www.yourdomain.com',
+  'https://evalion.free.nf',
+  'https://www.evalion.free.nf', // If www redirect is set up
   // Add development origins for local testing
   ...(process.env.NODE_ENV === 'development' 
     ? ['http://localhost:3000', 'http://127.0.0.1:3000'] 
@@ -177,16 +185,4 @@ function extractUserIdFromAuth(authHeader: string): string | undefined {
   return undefined;
 }
 
-// Configure which routes the middleware should run on
-export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public (public files)
-     */
-    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
-  ],
-};
+// Config is exported at the top of the file for Vercel Edge Runtime
