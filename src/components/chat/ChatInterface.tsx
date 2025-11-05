@@ -6,10 +6,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 interface Message {
   role: 'user' | 'assistant'
   content: string
+  timestamp?: number
 }
 
 interface ChatInterfaceProps {
-  onSendMessage: (message: string) => void
+  onSendMessage: (message: string, context?: Message[]) => void
   messages: Message[]
   isLoading: boolean
 }
@@ -21,7 +22,7 @@ export default function ChatInterface({ onSendMessage, messages, isLoading }: Ch
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (inputValue.trim() === '') return
-    onSendMessage(inputValue)
+    onSendMessage(inputValue, messages)
     setInputValue('')
   }
 

@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+then wname: CI/CD Pipeline
 
 on:
   push:

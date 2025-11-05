@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { getVoices } from '../../services/voice/voiceService';
+import { SubscriptionPlan, canUseVoice } from '../../utils/subscription';
 
 interface Voice {
   id: string;
@@ -22,9 +23,10 @@ interface VoiceControlsProps {
   isVoiceEnabled: boolean
   voiceSettings: VoiceSettings
   onVoiceSettingsChange: (settings: VoiceSettings) => void
+  userSubscriptionPlan?: SubscriptionPlan // Add subscription plan prop
 }
 
-export default function VoiceControls({ onToggleVoice, isVoiceEnabled, voiceSettings, onVoiceSettingsChange }: VoiceControlsProps) {
+export default function VoiceControls({ onToggleVoice, isVoiceEnabled, voiceSettings, onVoiceSettingsChange, userSubscriptionPlan = 'free' }: VoiceControlsProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [voices, setVoices] = useState<Voice[]>([])
   const [loadingVoices, setLoadingVoices] = useState(true)
@@ -92,6 +94,11 @@ export default function VoiceControls({ onToggleVoice, isVoiceEnabled, voiceSett
   };
 
   const handleVoiceToggle = () => {
+    // Only allow voice toggle if user has access to voice features
+    if (!isVoiceEnabled && !canUseVoice(userSubscriptionPlan)) {
+      alert('Voice features are only available in Premium and Pro plans. Please upgrade your subscription.');
+      return;
+    }
     onToggleVoice(!isVoiceEnabled)
   }
 
@@ -133,8 +140,16 @@ export default function VoiceControls({ onToggleVoice, isVoiceEnabled, voiceSett
           ) : (
             <select
               value={voiceSettings.voiceId}
-              onChange={(e) => onVoiceSettingsChange({ ...voiceSettings, voiceId: e.target.value })}
+              onChange={(e) => {
+                // Only allow voice settings change if user has access to voice features
+                if (!canUseVoice(userSubscriptionPlan)) {
+                  alert('Voice features are only available in Premium and Pro plans. Please upgrade your subscription.');
+                  return;
+                }
+                onVoiceSettingsChange({ ...voiceSettings, voiceId: e.target.value })
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+              disabled={!canUseVoice(userSubscriptionPlan)}
             >
               {voices.map((voice) => (
                 <option key={voice.id} value={voice.id}>
@@ -156,8 +171,16 @@ export default function VoiceControls({ onToggleVoice, isVoiceEnabled, voiceSett
             max="2"
             step="0.1"
             value={voiceSettings.speed}
-            onChange={(e) => onVoiceSettingsChange({ ...voiceSettings, speed: parseFloat(e.target.value) })}
+            onChange={(e) => {
+              // Only allow voice settings change if user has access to voice features
+              if (!canUseVoice(userSubscriptionPlan)) {
+                alert('Voice features are only available in Premium and Pro plans. Please upgrade your subscription.');
+                return;
+              }
+              onVoiceSettingsChange({ ...voiceSettings, speed: parseFloat(e.target.value) })
+            }}
             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+            disabled={!canUseVoice(userSubscriptionPlan)}
           />
           <div className="flex justify-between text-xs text-gray-500 mt-1">
             <span>Slower</span>
@@ -171,7 +194,7 @@ export default function VoiceControls({ onToggleVoice, isVoiceEnabled, voiceSett
           whileTap={{ scale: 0.98 }}
           onClick={handlePlay}
           className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-md transition"
-          disabled={!isVoiceEnabled}
+          disabled={!isVoiceEnabled || !canUseVoice(userSubscriptionPlan)}
         >
           <svg 
             xmlns="http://www.w3.org/2000/svg" 
