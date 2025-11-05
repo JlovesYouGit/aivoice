@@ -3,7 +3,19 @@
 import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 
-export default function VoiceControls({ onToggleVoice, isVoiceEnabled, voiceSettings, onVoiceSettingsChange }) {
+interface VoiceSettings {
+  voiceId: string
+  speed: number
+}
+
+interface VoiceControlsProps {
+  onToggleVoice: (enabled: boolean) => void
+  isVoiceEnabled: boolean
+  voiceSettings: VoiceSettings
+  onVoiceSettingsChange: (settings: VoiceSettings) => void
+}
+
+export default function VoiceControls({ onToggleVoice, isVoiceEnabled, voiceSettings, onVoiceSettingsChange }: VoiceControlsProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null);
 

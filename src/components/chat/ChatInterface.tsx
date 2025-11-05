@@ -1,13 +1,24 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, FormEvent } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-export default function ChatInterface({ onSendMessage, messages, isLoading }) {
-  const [inputValue, setInputValue] = useState('')
-  const messagesEndRef = useRef(null)
+interface Message {
+  role: 'user' | 'assistant'
+  content: string
+}
 
-  const handleSubmit = (e) => {
+interface ChatInterfaceProps {
+  onSendMessage: (message: string) => void
+  messages: Message[]
+  isLoading: boolean
+}
+
+export default function ChatInterface({ onSendMessage, messages, isLoading }: ChatInterfaceProps) {
+  const [inputValue, setInputValue] = useState('')
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (inputValue.trim() === '') return
     onSendMessage(inputValue)

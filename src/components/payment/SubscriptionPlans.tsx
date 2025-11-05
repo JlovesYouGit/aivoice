@@ -2,7 +2,11 @@
 
 import { motion } from 'framer-motion'
 
-export default function SubscriptionPlans({ onSelectPlan }) {
+interface SubscriptionPlansProps {
+  onSelectPlan: (planId: string) => void
+}
+
+export default function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
   const plans = [
     {
       id: 'free',
