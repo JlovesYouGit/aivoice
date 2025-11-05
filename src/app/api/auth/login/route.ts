@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { loginSchema } from '@/utils/validation/schemas'
 import { validateInput, handleValidationError } from '@/utils/validation/validate'
-import { Errors } from '@/src/utils/errorHandler'
+import { Errors } from '@/utils/errorHandler'
 
 export async function POST(request: Request) {
   try {

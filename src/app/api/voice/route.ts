@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { voiceSynthesisSchema } from '@/utils/validation/schemas'
 import { validateInput, handleValidationError } from '@/utils/validation/validate'
-import { Errors } from '@/src/utils/errorHandler'
+import { Errors } from '@/utils/errorHandler'
 import { synthesizeWithXTTS } from '@/lib/tts/xtts-client'
 
 export async function POST(request: Request) {

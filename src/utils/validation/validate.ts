@@ -1,8 +1,24 @@
 import { ZodSchema, z } from 'zod';
-import { Errors } from '@/src/utils/errorHandler';
+import { Errors } from '@/utils/errorHandler';
+import { sanitizeObject, containsDangerousContent } from '@/utils/sanitization';
 
 export function validateInput<T>(schema: ZodSchema<T>, data: unknown): { success: true; data: T } | { success: false; errors: string[] } {
-  const result = schema.safeParse(data);
+  // First, sanitize the input data
+  let sanitizedData: unknown;
+  
+  if (typeof data === 'object' && data !== null) {
+    sanitizedData = sanitizeObject(data as Record<string, any>);
+  } else if (typeof data === 'string') {
+    // Check for dangerous content before sanitization
+    if (containsDangerousContent(data)) {
+      return { success: false, errors: ['Input contains potentially dangerous content'] };
+    }
+    sanitizedData = data;
+  } else {
+    sanitizedData = data;
+  }
+  
+  const result = schema.safeParse(sanitizedData);
   
   if (result.success) {
     return { success: true, data: result.data };

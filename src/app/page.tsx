@@ -24,7 +24,7 @@ export default function Home() {
   })
 
   // Mock authentication functions
-  const handleLogin = (email, password) => {
+  const handleLogin = (email: string, password: string) => {
     console.log('Login attempt with:', email, password)
     // In a real app, this would call your authentication API
     setAuthState('authenticated')
@@ -36,7 +36,7 @@ export default function Home() {
     setAuthState('authenticated')
   }
 
-  const handleSignup = (email, password) => {
+  const handleSignup = (email: string, password: string) => {
     console.log('Signup attempt with:', email, password)
     // In a real app, this would call your signup API
     setAuthState('authenticated')
@@ -47,7 +47,7 @@ export default function Home() {
   }
 
   // Mock chat functions
-  const handleSendMessage = (message) => {
+  const handleSendMessage = (message: string) => {
     // Add user message
     const userMessage = { role: 'user', content: message }
     setMessages(prev => [...prev, userMessage])
@@ -77,16 +77,16 @@ export default function Home() {
   }
 
   // Voice functions
-  const handleToggleVoice = (enabled) => {
+  const handleToggleVoice = (enabled: boolean) => {
     setIsVoiceEnabled(enabled)
   }
 
-  const handleVoiceSettingsChange = (settings) => {
+  const handleVoiceSettingsChange = (settings: any) => {
     setVoiceSettings(settings)
   }
 
   // Payment functions
-  const handleSelectPlan = (planId) => {
+  const handleSelectPlan = (planId: string) => {
     console.log('Selected plan:', planId)
     // In a real app, this would redirect to the payment page
     alert(`You selected the ${planId} plan. In a real app, this would proceed to payment.`)

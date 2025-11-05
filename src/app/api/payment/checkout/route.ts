@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { paymentSchema } from '@/utils/validation/schemas'
 import { validateInput, handleValidationError } from '@/utils/validation/validate'
-import { Errors } from '@/src/utils/errorHandler'
+import { Errors } from '@/utils/errorHandler'
 
 // Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2023-10-16'
 })
 
