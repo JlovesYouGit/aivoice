@@ -54,7 +54,7 @@ export default function Home() {
   // Mock chat functions
   const handleSendMessage = (message: string) => {
     // Add user message
-    const userMessage = { role: 'user', content: message }
+    const userMessage: Message = { role: 'user', content: message }
     setMessages(prev => [...prev, userMessage])
     setIsLoading(true)
 
@@ -71,7 +71,7 @@ export default function Home() {
         "I appreciate your honesty. Let's work through this step by step."
       ]
       
-      const aiMessage = {
+      const aiMessage: Message = {
         role: 'assistant',
         content: responses[Math.floor(Math.random() * responses.length)]
       }
