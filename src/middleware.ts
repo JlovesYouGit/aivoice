@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { applyRateLimit, rateLimiters } from '@/lib/rate-limit';
 
-// Vercel Edge Runtime Configuration (root-level middleware)
+// Vercel Edge Runtime Configuration (src-level middleware)
 export const config = {
   matcher: [
     '/((?!_next/static|_next/image|favicon.ico|public/).*)',
