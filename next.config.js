@@ -41,6 +41,9 @@ const nextConfig = {
   experimental: {
     scrollRestoration: true,
   },
+
+  // Allow external host requests in development environment (Clacky)
+  allowedDevOrigins: ['*.clackypaas.com', 'localhost', '127.0.0.1'],
 }
 
 module.exports = nextConfig
