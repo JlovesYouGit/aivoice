@@ -1,14 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, FormEvent } from 'react'
 import { motion } from 'framer-motion'
 
-export default function SignupComponent({ onSignup, onLogin }) {
+interface SignupComponentProps {
+  onSignup: (email: string, password: string) => void
+  onLogin: () => void
+}
+
+export default function SignupComponent({ onSignup, onLogin }: SignupComponentProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (password !== confirmPassword) {
       alert('Passwords do not match')
