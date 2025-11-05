@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
+import LandingPage from '../components/landing/LandingPage'
 import LoginComponent from '../components/auth/LoginComponent'
 import SignupComponent from '../components/auth/SignupComponent'
 import ChatInterface from '../components/chat/ChatInterface'
@@ -22,7 +23,7 @@ interface Message {
 
 export default function Home() {
   const router = useRouter();
-  const [authState, setAuthState] = useState('login') // 'login', 'signup', 'authenticated'
+  const [authState, setAuthState] = useState('landing') // 'landing', 'login', 'signup', 'authenticated'
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(false)
@@ -213,6 +214,20 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100">
       <AnimatePresence mode="wait">
+        {authState === 'landing' && (
+          <motion.div
+            key="landing"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <LandingPage 
+              onGetStarted={() => setAuthState('signup')}
+              onLogin={() => setAuthState('login')}
+            />
+          </motion.div>
+        )}
+
         {authState === 'login' && (
           <motion.div
             key="login"
