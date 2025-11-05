@@ -23,7 +23,7 @@ const SECURITY_HEADERS: Record<string, string> = {
 const CSP = [
   "default-src 'self'",
   "connect-src 'self' https://api.stripe.com https://*.stripe.com https://evalion.free.nf",
-  "script-src 'self' https://js.stripe.com",
+  "script-src 'self' https://js.stripe.com 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "frame-src https://js.stripe.com https://hooks.stripe.com",
