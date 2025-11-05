@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { applyRateLimit, rateLimiters } from '@/lib/rate-limit';
+import { applyRateLimit, rateLimiters, checkRateLimit } from '@/lib/rate-limit';
 
 // Vercel Edge Runtime Configuration (src-level middleware)
 export const config = {
@@ -103,7 +103,27 @@ export async function middleware(request: NextRequest) {
       const rateLimiterType = getRateLimiterType(pathname);
       const authHeader = request.headers.get('authorization');
       const userId = authHeader ? extractUserIdFromAuth(authHeader) : undefined;
-      const rateLimitResult = await applyRateLimit(request, rateLimiterType, userId);
+      
+      // Use the new checkRateLimit function directly
+      let identifier = `ip:${request.ip || 'anonymous'}`;
+      if (userId) {
+        identifier = `user:${userId}`;
+      }
+      
+      const rateLimitResult = await checkRateLimit(rateLimiterType, identifier);
+
+      if (!rateLimitResult.success) {
+        // Rate limit exceeded
+        const error = new Error('Rate limit exceeded');
+        (error as any).status = 429;
+        (error as any).headers = {
+          'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+          'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+          'X-RateLimit-Reset': rateLimitResult.reset.toISOString(),
+          'Retry-After': Math.ceil((rateLimitResult.reset.getTime() - Date.now()) / 1000).toString(),
+        };
+        throw error;
+      }
 
       const response = NextResponse.next();
 
@@ -113,9 +133,9 @@ export async function middleware(request: NextRequest) {
         response.headers.set('Vary', 'Origin');
       }
 
-      Object.entries(rateLimitResult.headers).forEach(([key, value]) => {
-        response.headers.set(key, value);
-      });
+      response.headers.set('X-RateLimit-Limit', rateLimitResult.limit.toString());
+      response.headers.set('X-RateLimit-Remaining', rateLimitResult.remaining.toString());
+      response.headers.set('X-RateLimit-Reset', rateLimitResult.reset.toISOString());
 
       response.headers.set('Content-Security-Policy', CSP);
       Object.entries(SECURITY_HEADERS).forEach(([k, v]) => response.headers.set(k, v));
