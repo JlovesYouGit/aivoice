@@ -1,4 +1,4 @@
-import { synthesizeWithXTTS, XTTSVoiceSettings } from '../../lib/tts/xtts-client';
+import { synthesizeWithXTTS, getAvailableVoices, Voice, XTTSVoiceSettings } from '../../lib/tts/xtts-client';
 
 export interface VoiceSettings {
   voiceId: string;
@@ -10,6 +10,13 @@ export interface VoiceSynthesisResult {
   audioUrl?: string;
   message?: string;
   error?: string;
+}
+
+/**
+ * Get available voices from the XTTS service
+ */
+export async function getVoices(apiUrl: string, apiKey?: string): Promise<Voice[]> {
+  return await getAvailableVoices(apiUrl, apiKey);
 }
 
 export async function synthesizeVoice(text: string, settings: VoiceSettings, apiUrl: string, apiKey?: string): Promise<VoiceSynthesisResult> {

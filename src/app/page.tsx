@@ -52,14 +52,14 @@ export default function Home() {
   }
 
   // Mock chat functions
-  const handleSendMessage = (message: string) => {
+  const handleSendMessage = async (message: string) => {
     // Add user message
     const userMessage: Message = { role: 'user', content: message }
     setMessages(prev => [...prev, userMessage])
     setIsLoading(true)
 
     // Simulate AI response after a delay
-    setTimeout(() => {
+    setTimeout(async () => {
       const responses = [
         "I understand how you're feeling. It takes courage to share these thoughts.",
         "Thank you for opening up to me. Your feelings are valid and important.",
@@ -78,6 +78,29 @@ export default function Home() {
       
       setMessages(prev => [...prev, aiMessage])
       setIsLoading(false)
+      
+      // If voice is enabled, synthesize and play the response
+      if (isVoiceEnabled) {
+        try {
+          const response = await fetch('/api/voice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text: aiMessage.content,
+              voiceId: voiceSettings.voiceId,
+              speed: voiceSettings.speed
+            })
+          });
+          
+          const data = await response.json();
+          if (data.success && data.audioUrl) {
+            const audio = new Audio(data.audioUrl);
+            audio.play();
+          }
+        } catch (error) {
+          console.error('Error playing voice response:', error);
+        }
+      }
     }, 1500)
   }
 

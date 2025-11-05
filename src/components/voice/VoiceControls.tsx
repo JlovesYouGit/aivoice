@@ -1,7 +1,16 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { getVoices } from '../../services/voice/voiceService';
+
+interface Voice {
+  id: string;
+  name: string;
+  gender: 'male' | 'female';
+  language: string;
+  description: string;
+}
 
 interface VoiceSettings {
   voiceId: string
@@ -17,41 +26,62 @@ interface VoiceControlsProps {
 
 export default function VoiceControls({ onToggleVoice, isVoiceEnabled, voiceSettings, onVoiceSettingsChange }: VoiceControlsProps) {
   const [isPlaying, setIsPlaying] = useState(false)
+  const [voices, setVoices] = useState<Voice[]>([])
+  const [loadingVoices, setLoadingVoices] = useState(true)
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Fetch available voices on component mount
+  useEffect(() => {
+    const fetchVoices = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_XTTS_API_URL || 'http://localhost:8000';
+        const voices = await getVoices(apiUrl);
+        setVoices(voices);
+        setLoadingVoices(false);
+      } catch (error) {
+        console.error('Error fetching voices:', error);
+        // Fallback to default voices
+        setVoices([
+          { id: 'female-1', name: 'Serene Female', gender: 'female', language: 'en', description: 'Warm and nurturing female voice' },
+          { id: 'male-1', name: 'Serene Male', gender: 'male', language: 'en', description: 'Calm and reassuring male voice' },
+          { id: 'female-2', name: 'Professional Female', gender: 'female', language: 'en', description: 'Clear and professional female voice' },
+          { id: 'male-2', name: 'Friendly Male', gender: 'male', language: 'en', description: 'Approachable and friendly male voice' }
+        ]);
+        setLoadingVoices(false);
+      }
+    };
+
+    fetchVoices();
+  }, []);
 
   const handlePlay = async () => {
     // Toggle playing state
     setIsPlaying(!isPlaying);
     
     // In a real implementation, this would trigger text-to-speech
-    // For demonstration, we'll simulate playing audio
     if (!isPlaying) {
-      // Simulate starting audio playback
-      console.log('Playing test voice with settings:', voiceSettings);
-      
-      // In a real implementation, we would:
-      // 1. Call the voice synthesis API
-      // 2. Get the audio URL
-      // 3. Play the audio
-      // 
-      // Example:
-      // const response = await fetch('/api/voice', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     text: 'This is a test of the voice synthesis system.',
-      //     voiceId: voiceSettings.voiceId,
-      //     speed: voiceSettings.speed
-      //   })
-      // });
-      // 
-      // const data = await response.json();
-      // if (data.success && data.audioUrl) {
-      //   if (audioRef.current) {
-      //     audioRef.current.src = data.audioUrl;
-      //     audioRef.current.play();
-      //   }
-      // }
+      // Play test voice
+      try {
+        const response = await fetch('/api/voice', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: 'This is a test of the voice synthesis system.',
+            voiceId: voiceSettings.voiceId,
+            speed: voiceSettings.speed
+          })
+        });
+        
+        const data = await response.json();
+        if (data.success && data.audioUrl) {
+          if (audioRef.current) {
+            audioRef.current.src = data.audioUrl;
+            audioRef.current.play();
+          }
+        }
+      } catch (error) {
+        console.error('Error playing test voice:', error);
+      }
     } else {
       // Stop audio playback
       if (audioRef.current) {
@@ -96,16 +126,23 @@ export default function VoiceControls({ onToggleVoice, isVoiceEnabled, voiceSett
         {/* Voice selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Voice</label>
-          <select
-            value={voiceSettings.voiceId}
-            onChange={(e) => onVoiceSettingsChange({ ...voiceSettings, voiceId: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            <option value="male-1">Male - Calm & Reassuring</option>
-            <option value="female-1">Female - Warm & Nurturing</option>
-            <option value="male-2">Male - Professional & Clear</option>
-            <option value="female-2">Female - Friendly & Approachable</option>
-          </select>
+          {loadingVoices ? (
+            <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
+              Loading voices...
+            </div>
+          ) : (
+            <select
+              value={voiceSettings.voiceId}
+              onChange={(e) => onVoiceSettingsChange({ ...voiceSettings, voiceId: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              {voices.map((voice) => (
+                <option key={voice.id} value={voice.id}>
+                  {voice.name} - {voice.description}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
 
         {/* Speed control */}
