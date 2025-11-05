@@ -9,8 +9,7 @@ import SignupComponent from '../components/auth/SignupComponent'
 import ChatInterface from '../components/chat/ChatInterface'
 import VoiceControls from '../components/voice/VoiceControls'
 import UserInsights from '../components/analytics/UserInsights'
-import { SubscriptionPlan } from '@/utils/subscription'
-import { canUseVoice } from '@/utils/subscription'
+import { SubscriptionPlan, canUseVoice } from '@/utils/subscription'
 import { getConversationHistory, initializeConversationHistory, addMessageToHistory, Message as HistoryMessage } from '@/utils/conversationHistory'
 import { needsRealTimeInfo, googleSearch } from '@/utils/googleSearch'
 import { trackMessage, trackSession, getUserAnalytics } from '@/utils/analytics'
@@ -18,13 +17,13 @@ import { trackMessage, trackSession, getUserAnalytics } from '@/utils/analytics'
 interface Message {
   role: 'user' | 'assistant'
   content: string
-  timestamp?: number
+  timestamp?: Date
 }
 
 export default function Home() {
   const router = useRouter();
   const [authState, setAuthState] = useState('landing') // 'landing', 'login', 'signup', 'authenticated'
-  const [messages, setMessages] = useState<Message[]>([])
+  const [messages, setMessages] = useState<HistoryMessage[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(false)
   const [voiceSettings, setVoiceSettings] = useState<{ voiceId: string; speed: number }>({
@@ -35,6 +34,9 @@ export default function Home() {
   const [conversationHistory, setConversationHistory] = useState(initializeConversationHistory())
   const [showInsights, setShowInsights] = useState(false)
 
+  // Current user's subscription plan (mock data - in a real app this would come from the backend)
+  const userSubscriptionPlan: SubscriptionPlan = 'premium'; // Default to premium for demo
+
   // Load conversation history on component mount
   useEffect(() => {
     const history = getConversationHistory();
@@ -43,7 +45,7 @@ export default function Home() {
       setMessages(history.messages);
     } else {
       // Initialize with welcome message
-      const welcomeMessage: Message = {
+      const welcomeMessage: HistoryMessage = {
         role: 'assistant',
         content: 'Hello! I\'m Serene, your compassionate AI assistant for mental wellness. How are you feeling today?',
         timestamp: Date.now()
@@ -81,13 +83,10 @@ export default function Home() {
     setAuthState('login')
   }
 
-  // Current user's subscription plan (mock data - in a real app this would come from the backend)
-  const userSubscriptionPlan: SubscriptionPlan = 'premium'; // Default to premium for demo
-
   // Mock chat functions
   const handleSendMessage = async (message: string, context?: HistoryMessage[]) => {
     // Add user message to both state and history
-    const userMessage: Message = { 
+    const userMessage: HistoryMessage = { 
       role: 'user', 
       content: message,
       timestamp: Date.now()
@@ -149,7 +148,7 @@ export default function Home() {
         }
       }
       
-      const aiMessage: Message = {
+      const aiMessage: HistoryMessage = {
         role: 'assistant',
         content: responses[Math.floor(Math.random() * responses.length)],
         timestamp: Date.now()
@@ -321,7 +320,10 @@ export default function Home() {
               {/* Chat interface - larger on mobile, smaller on desktop */}
               <div className="flex-1 h-[70vh] md:h-[80vh] rounded-2xl overflow-hidden shadow-xl">
                 <ChatInterface 
-                  messages={messages}
+                  messages={messages.map(msg => ({
+                    ...msg,
+                    timestamp: msg.timestamp ? new Date(msg.timestamp) : undefined
+                  }))}
                   onSendMessage={handleSendMessage}
                   isLoading={isLoading}
                 />
@@ -334,7 +336,6 @@ export default function Home() {
                   onToggleVoice={handleToggleVoice}
                   voiceSettings={voiceSettings}
                   onVoiceSettingsChange={handleVoiceSettingsChange}
-                  userSubscriptionPlan={userSubscriptionPlan}
                 />
                 
                 <div className="bg-white rounded-2xl shadow-lg p-6">
