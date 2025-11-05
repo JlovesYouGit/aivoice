@@ -1,19 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { applyRateLimit, rateLimiters } from '@/lib/rate-limit';
 
-// Vercel Edge Runtime Configuration
+// Vercel Edge Runtime Configuration (root-level middleware)
 export const config = {
   matcher: [
     '/((?!_next/static|_next/image|favicon.ico|public/).*)',
   ],
-  runtime: 'edge', // Use Vercel Edge Runtime for optimal performance
+  runtime: 'experimental-edge',
 };
+
+// Global security headers and CSP
+const SECURITY_HEADERS: Record<string, string> = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'no-referrer',
+  'Permissions-Policy': "camera=(), microphone=(), geolocation=()",
+  'Cross-Origin-Opener-Policy': 'same-origin',
+  'Cross-Origin-Resource-Policy': 'same-origin',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+}
+
+const CSP = [
+  "default-src 'self'",
+  "connect-src 'self' https://api.stripe.com https://*.stripe.com https://evalion.free.nf",
+  "script-src 'self' https://js.stripe.com",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "frame-src https://js.stripe.com https://hooks.stripe.com",
+].join('; ')
 
 // CORS configuration for evalion.free.nf
 const CORS_ORIGINS = [
   'https://evalion.free.nf',
-  'https://www.evalion.free.nf', // If www redirect is set up
-  // Add development origins for local testing
+  'https://www.evalion.free.nf',
   ...(process.env.NODE_ENV === 'development' 
     ? ['http://localhost:3000', 'http://127.0.0.1:3000'] 
     : []
@@ -29,21 +48,16 @@ const CORS_HEADERS = [
   'X-Requested-With',
 ];
 
-// Helper function to check if origin is allowed
 function isOriginAllowed(origin: string | null): boolean {
   if (!origin) return false;
-  
-  // In development, allow localhost
   if (process.env.NODE_ENV === 'development') {
     if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
       return true;
     }
   }
-  
   return CORS_ORIGINS.includes(origin);
 }
 
-// Rate limiting configuration for different routes
 const RATE_LIMIT_CONFIG: Record<string, keyof typeof rateLimiters> = {
   '/api/chat': 'chat',
   '/api/voice': 'voice',
@@ -52,7 +66,6 @@ const RATE_LIMIT_CONFIG: Record<string, keyof typeof rateLimiters> = {
   '/api/payment': 'payment',
 };
 
-// Get rate limiter for a given path
 function getRateLimiterType(pathname: string): keyof typeof rateLimiters {
   for (const [path, limiterType] of Object.entries(RATE_LIMIT_CONFIG)) {
     if (pathname.startsWith(path)) {
@@ -63,15 +76,13 @@ function getRateLimiterType(pathname: string): keyof typeof rateLimiters {
 }
 
 export async function middleware(request: NextRequest) {
-  const { pathname, origin } = request.nextUrl;
+  const { pathname } = request.nextUrl;
   const requestOrigin = request.headers.get('origin');
-  
-  // Handle CORS preflight requests
+
   if (request.method === 'OPTIONS') {
     if (!isOriginAllowed(requestOrigin)) {
       return new NextResponse(null, { status: 403 });
     }
-    
     return new NextResponse(null, {
       status: 200,
       headers: {
@@ -79,110 +90,78 @@ export async function middleware(request: NextRequest) {
         'Access-Control-Allow-Methods': CORS_METHODS.join(', '),
         'Access-Control-Allow-Headers': CORS_HEADERS.join(', '),
         'Access-Control-Allow-Credentials': 'true',
-        'Access-Control-Max-Age': '86400', // 24 hours
+        'Access-Control-Max-Age': '86400',
         'Vary': 'Origin',
+        'Content-Security-Policy': CSP,
+        ...SECURITY_HEADERS,
       },
     });
   }
 
-  // Apply rate limiting to API routes
   if (pathname.startsWith('/api/')) {
     try {
       const rateLimiterType = getRateLimiterType(pathname);
-      
-      // Extract user ID from Authorization header if present
       const authHeader = request.headers.get('authorization');
       const userId = authHeader ? extractUserIdFromAuth(authHeader) : undefined;
-      
       const rateLimitResult = await applyRateLimit(request, rateLimiterType, userId);
-      
-      // Continue with the request
+
       const response = NextResponse.next();
-      
-      // Add CORS headers to API responses
+
       if (isOriginAllowed(requestOrigin)) {
         response.headers.set('Access-Control-Allow-Origin', requestOrigin || '*');
         response.headers.set('Access-Control-Allow-Credentials', 'true');
         response.headers.set('Vary', 'Origin');
       }
-      
-      // Add rate limit headers
+
       Object.entries(rateLimitResult.headers).forEach(([key, value]) => {
         response.headers.set(key, value);
       });
-      
-      // Add security headers for API routes
-      response.headers.set('X-Content-Type-Options', 'nosniff');
-      response.headers.set('X-Frame-Options', 'DENY');
-      response.headers.set('X-XSS-Protection', '1; mode=block');
-      
+
+      response.headers.set('Content-Security-Policy', CSP);
+      Object.entries(SECURITY_HEADERS).forEach(([k, v]) => response.headers.set(k, v));
+
       return response;
-      
     } catch (error: any) {
-      // Rate limit exceeded
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        'X-Content-Type-Options': 'nosniff',
-        'X-Frame-Options': 'DENY',
+        'Content-Security-Policy': CSP,
+        ...SECURITY_HEADERS,
       };
-      
-      // Add rate limit headers if available
-      if (error.headers) {
-        Object.assign(headers, error.headers);
-      }
-      
-      // Add CORS headers even for rate limit errors
+
+      if (error.headers) Object.assign(headers, error.headers);
       if (isOriginAllowed(requestOrigin)) {
         headers['Access-Control-Allow-Origin'] = requestOrigin || '*';
         headers['Access-Control-Allow-Credentials'] = 'true';
         headers['Vary'] = 'Origin';
       }
-      
+
       return new NextResponse(
-        JSON.stringify({
-          error: 'Rate limit exceeded',
-          message: 'Too many requests. Please try again later.',
-        }),
-        {
-          status: 429,
-          headers,
-        }
+        JSON.stringify({ error: 'Rate limit exceeded', message: 'Too many requests. Please try again later.' }),
+        { status: 429, headers }
       );
     }
   }
-  
-  // For non-API routes, just add basic CORS headers if needed
+
   const response = NextResponse.next();
-  
   if (isOriginAllowed(requestOrigin)) {
     response.headers.set('Access-Control-Allow-Origin', requestOrigin || '*');
     response.headers.set('Access-Control-Allow-Credentials', 'true');
     response.headers.set('Vary', 'Origin');
   }
-  
+  response.headers.set('Content-Security-Policy', CSP);
+  Object.entries(SECURITY_HEADERS).forEach(([k, v]) => response.headers.set(k, v));
+
   return response;
 }
 
-// Helper function to extract user ID from Authorization header
 function extractUserIdFromAuth(authHeader: string): string | undefined {
-  // This is a placeholder implementation
-  // You should implement this based on your authentication system
   try {
     if (authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
-      // Decode JWT token and extract user ID
-      // For Firebase, you might use the Firebase Admin SDK
-      // const decodedToken = await admin.auth().verifyIdToken(token);
-      // return decodedToken.uid;
-      
-      // For now, return undefined to use IP-based rate limiting
       return undefined;
     }
   } catch (error) {
     console.error('Error extracting user ID from auth header:', error);
   }
-  
   return undefined;
 }
-
-// Config is exported at the top of the file for Vercel Edge Runtime

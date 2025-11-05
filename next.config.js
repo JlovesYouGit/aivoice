@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable typedRoutes for Vercel deployment (supports latest Next.js)
-  typedRoutes: true,
-  
   // Production optimizations for Vercel
   poweredByHeader: false,
   compress: true,
