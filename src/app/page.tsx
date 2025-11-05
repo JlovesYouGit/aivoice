@@ -97,6 +97,75 @@ export default function Home() {
     setMessages(updatedHistory.messages);
     setIsLoading(true);
 
+    try {
+      // Send message to AI with conversation history
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: message,
+          history: updatedHistory.messages.map(msg => ({
+            role: msg.role,
+            content: msg.content
+          }))
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success && data.response) {
+        // Create AI message with response
+        const aiMessage: HistoryMessage = {
+          role: 'assistant',
+          content: data.response,
+          timestamp: Date.now()
+        }
+        
+        const finalHistory = addMessageToHistory(updatedHistory, aiMessage);
+        setConversationHistory(finalHistory);
+        setMessages(finalHistory.messages);
+      } else {
+        // Fallback to default response if API fails
+        const fallbackResponses = [
+          "I understand how you're feeling. It takes courage to share these thoughts.",
+          "Thank you for opening up to me. Your feelings are valid and important.",
+          "It sounds like you're going through a challenging time. Let's explore this together.",
+          "I'm here to listen without judgment. What else would you like to share?",
+          "Your perspective is valuable. How long have you been feeling this way?"
+        ];
+        
+        const aiMessage: HistoryMessage = {
+          role: 'assistant',
+          content: fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)],
+          timestamp: Date.now()
+        }
+        
+        const finalHistory = addMessageToHistory(updatedHistory, aiMessage);
+        setConversationHistory(finalHistory);
+        setMessages(finalHistory.messages);
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      // Fallback response in case of error
+      const fallbackResponses = [
+        "I'm here to support you through this. It's okay to take things one step at a time.",
+        "Your well-being matters to me. Let's work through this together.",
+        "I appreciate you sharing this with me. What would feel most helpful right now?"
+      ];
+      
+      const aiMessage: HistoryMessage = {
+        role: 'assistant',
+        content: fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)],
+        timestamp: Date.now()
+      }
+      
+      const finalHistory = addMessageToHistory(updatedHistory, aiMessage);
+      setConversationHistory(finalHistory);
+      setMessages(finalHistory.messages);
+    } finally {
+      setIsLoading(false);
+    }
+    
     // Check if we need real-time information
     let searchResults = null;
     if (needsRealTimeInfo(message)) {

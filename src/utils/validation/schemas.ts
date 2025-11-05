@@ -1,8 +1,16 @@
 import { z } from 'zod';
 
+// Define a message schema for conversation history
+const messageSchema = z.object({
+  role: z.enum(['user', 'assistant']),
+  content: z.string().min(1).max(1000),
+  timestamp: z.number().optional(),
+});
+
 // Chat message schema
 export const chatMessageSchema = z.object({
   message: z.string().min(1, 'Message is required').max(1000, 'Message is too long'),
+  history: z.array(messageSchema).optional(),
 });
 
 // Voice synthesis schema
@@ -42,3 +50,4 @@ export type VoiceSynthesis = z.infer<typeof voiceSynthesisSchema>;
 export type LoginData = z.infer<typeof loginSchema>;
 export type SignupData = z.infer<typeof signupSchema>;
 export type PaymentData = z.infer<typeof paymentSchema>;
+export type MessageHistory = z.infer<typeof messageSchema>;

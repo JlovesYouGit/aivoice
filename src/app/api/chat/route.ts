@@ -14,12 +14,24 @@ export async function POST(request: Request) {
       return handleValidationError(validation.errors)
     }
     
-    const { message } = validation.data
+    const { message, history } = validation.data
 
-    // Create chat message history (in a real implementation, this would come from session)
-    const messages: ChatMessage[] = [
-      { role: 'user', content: message }
-    ];
+    // Create chat message history
+    // If history is provided, use it; otherwise create a simple history
+    let messages: ChatMessage[] = [];
+    
+    if (history && Array.isArray(history)) {
+      // Convert history to ChatMessage format
+      messages = history.map((msg) => ({
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content
+      }));
+    } else {
+      // Default to just the current message
+      messages = [
+        { role: 'user', content: message }
+      ];
+    }
 
     // Generate response using local AI service
     const result = await localChatService.generateResponse(messages);
